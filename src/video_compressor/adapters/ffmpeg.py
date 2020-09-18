@@ -12,6 +12,28 @@ def process(command):
     )
 
 
+class ffprobeCmdBuilder():
+
+    def __init__(
+        self,
+        input,
+        **options
+    ):
+        self.input = input
+
+    @property
+    def ffprobe(self):
+        return "ffprobe -v error -select_streams v:0 -of csv=s=,:p=0"
+
+    @property
+    def resolution(self):
+        return f"{self.ffprobe} -show_entries stream=width,height {self.input}"
+
+    @property
+    def bitrate(self):
+        return f"{self.ffprobe} -show_entries stream=bit_rate {self.input}"
+
+
 class ffmpegCmdBuilder():
 
     def __init__(
@@ -20,21 +42,20 @@ class ffmpegCmdBuilder():
         bin_ffmpeg=None,
         mute=None,
         scale=None,
-        output=None
+        bitrate=None,
+        output=None,
+        **options
     ):
         self.input = input
         self.bin_ffmpeg = bin_ffmpeg
         self.mute = mute
         self.scale = scale
+        self.bitrate = bitrate
         self.output = output
 
     @property
     def ffmpeg(self):
         return f"{self.bin_ffmpeg} -i {self.input} "
-
-    @property
-    def ffprobe(self):
-        return "ffprobe -v error -select_streams v:0 -of csv=s=,:p=0"
 
     @property
     def mutefilter(self):
@@ -43,6 +64,10 @@ class ffmpegCmdBuilder():
     @property
     def scalefilter(self):
         return f'-vf scale={self.scale[0]}:{self.scale[1]}' if self.scale else ''
+
+    @property
+    def bitratefilter(self):
+        return f'-b:v {self.bitrate}' if self.bitrate else ''
 
     @property
     def pipestdout(self):
@@ -54,19 +79,11 @@ class ffmpegCmdBuilder():
 
     @property
     def export(self):
-        return f'{self.ffmpeg} {self.mutefilter} {self.scalefilter} {self.output}'
+        return f'{self.ffmpeg} {self.mutefilter} {self.scalefilter} {self.bitratefilter} {self.output}'
 
     @property
     def volumedetect(self):
         return f"{self.ffmpeg} -af 'volumedetect' {self.pipestdout}"
-
-    @property
-    def resolution(self):
-        return f"{self.ffprobe} -show_entries stream=width,height {self.input}"
-
-    @property
-    def bitrate(self):
-        return f"{self.ffprobe} -show_entries stream=bit_rate {self.input}"
 
 
 class ffmpegAdapter():
@@ -77,14 +94,18 @@ class ffmpegAdapter():
         bin_ffmpeg='ffmpeg',
         mute=None,
         scale=None,
+        bitrate=None,
         output=None
     ):
         self._bin_ffmpeg = bin_ffmpeg
         self._input = input
         self._mute = mute
         self._scale = scale
+        self._bitrate = bitrate
         self._output = output
-        self.cmd = ffmpegCmdBuilder(**self.options())
+
+        self.ffmpeg = ffmpegCmdBuilder(**self.options())
+        self.ffprobe = ffprobeCmdBuilder(**self.options())
 
         self._check_bin_validity(bin_ffmpeg)
         self._check_input_integrity(input)
@@ -95,7 +116,8 @@ class ffmpegAdapter():
             'bin_ffmpeg': self._bin_ffmpeg,
             'mute': self._mute,
             'scale': self._scale,
-            'output': self._output
+            'output': self._output,
+            'bitrate': self._bitrate
         }
 
     def update(self, **updates):
@@ -119,26 +141,29 @@ class ffmpegAdapter():
     def scale(self, *scale):
         return self.update(scale=scale)
 
+    def bitrate(self, bitrate):
+        return self.update(bitrate=bitrate)
+
     def _check_bin_validity(self, bin):
         if which(bin) is None:
             raise MissingLibraryError
 
     def _check_input_integrity(self, input):
-        trace, error = process(self.cmd.integrity)
+        trace, error = process(self.ffmpeg.integrity)
         if 'Invalid data' in trace or 'No such file or directory' in trace:
             raise InvalidVideoInput(trace)
 
     def export(self, output):
-        process(self.output(output).cmd.export)
+        process(self.output(output).ffmpeg.export)
 
     def volumedetect(self):
-        volumetrace, error = process(self.cmd.volumedetect)
+        volumetrace, error = process(self.ffmpeg.volumedetect)
         return 'Parsed_volumedetect' not in volumetrace
 
-    def resolution(self):
-        resolution, error = process(self.cmd.resolution)
+    def get_resolution(self):
+        resolution, error = process(self.ffprobe.resolution)
         return map(int, resolution.split(','))
 
-    def bitrate(self):
-        bitrate, error = process(self.cmd.bitrate)
+    def get_bitrate(self):
+        bitrate, error = process(self.ffprobe.bitrate)
         return int(bitrate)
