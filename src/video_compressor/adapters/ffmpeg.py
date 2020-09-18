@@ -5,6 +5,7 @@ from ..exceptions import MissingLibraryError
 
 
 def process(command):
+    print(command)
     process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
     return process.stdout.decode("utf-8")
 
@@ -16,11 +17,13 @@ class ffmpegCmdBuilder():
         input=None,
         bin_ffmpeg=None,
         mute=None,
+        scale=None,
         output=None
     ):
         self.input = input
         self.bin_ffmpeg = bin_ffmpeg
         self.mute = mute
+        self.scale = scale
         self.output = output
 
     @property
@@ -32,8 +35,12 @@ class ffmpegCmdBuilder():
         return '-an' if self.mute else ''
 
     @property
+    def scalefilter(self):
+        return f'-vf scale={self.scale[0]}:{self.scale[1]}' if self.scale else ''
+
+    @property
     def export(self):
-        return f'{self.ffmpeg} -vcodec copy {self.mutefilter} {self.output}'
+        return f'{self.ffmpeg} {self.mutefilter} {self.scalefilter} {self.output}'
 
     @property
     def volumedetect(self):
@@ -51,11 +58,13 @@ class ffmpegAdapter():
         input=None,
         bin_ffmpeg='ffmpeg',
         mute=None,
+        scale=None,
         output=None
     ):
         self._bin_ffmpeg = bin_ffmpeg
         self._input = input
         self._mute = mute
+        self._scale = scale
         self._output = output
         self.cmd = ffmpegCmdBuilder(**self.options())
 
@@ -66,6 +75,7 @@ class ffmpegAdapter():
             'input': self._input,
             'bin_ffmpeg': self._bin_ffmpeg,
             'mute': self._mute,
+            'scale': self._scale,
             'output': self._output
         }
 
@@ -87,12 +97,15 @@ class ffmpegAdapter():
     def mute(self, mute):
         return self.update(mute=mute)
 
+    def scale(self, *scale):
+        return self.update(scale=scale)
+
     def _check_bin_validity(self, bin):
         if which(bin) is None:
             raise MissingLibraryError
 
-    def export(self):
-        process(self.cmd.export)
+    def export(self, output):
+        process(self.output(output).cmd.export)
 
     def volumedetect(self):
         volumetrace = process(self.cmd.volumedetect)
