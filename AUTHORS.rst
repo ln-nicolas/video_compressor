@@ -2,4 +2,4 @@
 Contributors
 ============
 
-* sne3ks <nicolas@atelierdunumerique.Io>
+* Lenselle Nicolas <nicolas@atelierdunumerique.io>

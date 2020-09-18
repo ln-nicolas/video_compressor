@@ -21,8 +21,8 @@ import logging
 
 from video_compressor import __version__
 
-__author__ = "sne3ks"
-__copyright__ = "sne3ks"
+__author__ = "Lenselle Nicolas"
+__copyright__ = "Lenselle Nicolas"
 __license__ = "mit"
 
 _logger = logging.getLogger(__name__)
