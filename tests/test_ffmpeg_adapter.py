@@ -29,6 +29,8 @@ def tempfile(tempdir):
 
 @pytest.fixture(scope="function", autouse=True)
 def beforeAll(tempdir):
+    if os.path.exists(tempdir):
+        shutil.rmtree(tempdir)
     os.mkdir(tempdir)
     yield
     shutil.rmtree(tempdir)
@@ -44,6 +46,7 @@ def test_error_with_invalid_ffmpeg():
 def test_error_with_invalid_input():
     with pytest.raises(InvalidVideoInput):
         ffmpegAdapter(input='./tests/corrupted-sample.mp4')
+
     with pytest.raises(InvalidVideoInput):
         ffmpegAdapter(input='./tests/unexisting-sample.mp4')
 
@@ -71,14 +74,14 @@ def test_check_video_has_not_sound():
 def test_mute_a_video(tempfile):
     video = ffmpegAdapter(input='./tests/sample.mp4')
 
-    tmp01 = tempfile(filename='tmp1.mp4')
-    tmp02 = tempfile(filename='tmp2.mp4')
+    sample_copy = tempfile(filename='sample-copy.mp4')
+    sample_muted = tempfile(filename='sample-muted.mp4')
 
-    video.export(tmp01)
-    video.mute(True).export(tmp02)
+    video.export(sample_copy)
+    video.mute(True).export(sample_muted)
 
-    assert ffmpegAdapter(input=tmp01).volumedetect() is False
-    assert ffmpegAdapter(input=tmp02).volumedetect() is True
+    assert ffmpegAdapter(input=sample_copy).volumedetect() is False
+    assert ffmpegAdapter(input=sample_muted).volumedetect() is True
 
 
 def test_get_video_size():
@@ -90,14 +93,30 @@ def test_get_video_size():
 
 def test_scale_video(tempfile):
 
-    tmp01 = tempfile(filename='tmp1.mp4')
+    sample54x96 = tempfile(filename='sample-54x96.mp4')
 
     video = ffmpegAdapter(input='./tests/sample.mp4')
     w, h = video.resolution()
     assert w == 960
     assert h == 540
 
-    video.scale(96, 54).export(tmp01)
-    w, h = ffmpegAdapter(input=tmp01).resolution()
+    video.scale(96, 54).export(sample54x96)
+    w, h = ffmpegAdapter(input=sample54x96).resolution()
     assert w == 96
     assert h == 54
+
+
+def test_scale_video_keep_ratio(tempfile):
+
+    sample640 = tempfile(filename='sample-54x96.mp4')
+
+    video = ffmpegAdapter(input='./tests/sample.mp4')
+    w1, h1 = video.resolution()
+
+    video.scale(640, -1).export(sample640)
+    w2, h2 = ffmpegAdapter(input=sample640).resolution()
+    assert w2 // h2 == w1 // h1
+
+
+def test_get_video_bitrate():
+    assert ffmpegAdapter(input='./tests/sample.mp4').bitrate() == 2200634

@@ -33,6 +33,10 @@ class ffmpegCmdBuilder():
         return f"{self.bin_ffmpeg} -i {self.input} "
 
     @property
+    def ffprobe(self):
+        return "ffprobe -v error -select_streams v:0 -of csv=s=,:p=0"
+
+    @property
     def mutefilter(self):
         return '-an' if self.mute else ''
 
@@ -58,7 +62,11 @@ class ffmpegCmdBuilder():
 
     @property
     def resolution(self):
-        return f"ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 {self.input}"
+        return f"{self.ffprobe} -show_entries stream=width,height {self.input}"
+
+    @property
+    def bitrate(self):
+        return f"{self.ffprobe} -show_entries stream=bit_rate {self.input}"
 
 
 class ffmpegAdapter():
@@ -129,4 +137,8 @@ class ffmpegAdapter():
 
     def resolution(self):
         resolution, error = process(self.cmd.resolution)
-        return map(int, resolution.split('x'))
+        return map(int, resolution.split(','))
+
+    def bitrate(self):
+        bitrate, error = process(self.cmd.bitrate)
+        return int(bitrate)
