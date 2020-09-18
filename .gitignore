@@ -49,3 +49,5 @@ MANIFEST
 
 # Per-project virtualenvs
 .env*/
+
+env/
