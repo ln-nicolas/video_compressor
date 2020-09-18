@@ -4,3 +4,7 @@ class VideoCompressorException(Exception):
 
 class MissingLibraryError(VideoCompressorException):
     pass
+
+
+class InvalidVideoInput(VideoCompressorException):
+    pass

@@ -5,7 +5,7 @@ import os
 import shutil
 
 from video_compressor.adapters.ffmpeg import ffmpegAdapter
-from video_compressor.exceptions import MissingLibraryError
+from video_compressor.exceptions import MissingLibraryError, InvalidVideoInput
 
 __author__ = "Lenselle Nicolas"
 __copyright__ = "Lenselle Nicolas"
@@ -36,13 +36,16 @@ def beforeAll(tempdir):
 
 def test_error_with_invalid_ffmpeg():
     with pytest.raises(MissingLibraryError):
-        ffmpegAdapter(input='./sample.mp4', bin_ffmpeg='ffmpeg-custom-bin')
+        ffmpegAdapter(input='./tests/sample.mp4', bin_ffmpeg='ffmpeg-custom-bin')
     with pytest.raises(MissingLibraryError):
-        ffmpegAdapter(input='./sample.mp4').bin_ffmpeg('ffmpeg-custom-bin')
+        ffmpegAdapter(input='./tests/sample.mp4').bin_ffmpeg('ffmpeg-custom-bin')
 
 
 def test_error_with_invalid_input():
-    pass
+    with pytest.raises(InvalidVideoInput):
+        ffmpegAdapter(input='./tests/corrupted-sample.mp4')
+    with pytest.raises(InvalidVideoInput):
+        ffmpegAdapter(input='./tests/unexisting-sample.mp4')
 
 
 def test_error_with_invalid_ouput():

@@ -1,13 +1,15 @@
 from shutil import which
 import subprocess
 
-from ..exceptions import MissingLibraryError
+from ..exceptions import MissingLibraryError, InvalidVideoInput
 
 
 def process(command):
-    print(command)
     process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-    return process.stdout.decode("utf-8")
+    return (
+        (process.stdout or b'').decode("utf-8"),
+        (process.stderr or b'').decode("utf-8")
+    )
 
 
 class ffmpegCmdBuilder():
@@ -39,12 +41,20 @@ class ffmpegCmdBuilder():
         return f'-vf scale={self.scale[0]}:{self.scale[1]}' if self.scale else ''
 
     @property
+    def pipestdout(self):
+        return '-f null /dev/null 2>&1'
+
+    @property
+    def integrity(self):
+        return f'{self.ffmpeg} -v error {self.pipestdout}'
+
+    @property
     def export(self):
         return f'{self.ffmpeg} {self.mutefilter} {self.scalefilter} {self.output}'
 
     @property
     def volumedetect(self):
-        return f"{self.ffmpeg} -af 'volumedetect' -f null /dev/null 2>&1"
+        return f"{self.ffmpeg} -af 'volumedetect' {self.pipestdout}"
 
     @property
     def resolution(self):
@@ -69,6 +79,7 @@ class ffmpegAdapter():
         self.cmd = ffmpegCmdBuilder(**self.options())
 
         self._check_bin_validity(bin_ffmpeg)
+        self._check_input_integrity(input)
 
     def options(self):
         return {
@@ -104,13 +115,18 @@ class ffmpegAdapter():
         if which(bin) is None:
             raise MissingLibraryError
 
+    def _check_input_integrity(self, input):
+        trace, error = process(self.cmd.integrity)
+        if 'Invalid data' in trace or 'No such file or directory' in trace:
+            raise InvalidVideoInput(trace)
+
     def export(self, output):
         process(self.output(output).cmd.export)
 
     def volumedetect(self):
-        volumetrace = process(self.cmd.volumedetect)
+        volumetrace, error = process(self.cmd.volumedetect)
         return 'Parsed_volumedetect' not in volumetrace
 
     def resolution(self):
-        resolution = process(self.cmd.resolution)
+        resolution, error = process(self.cmd.resolution)
         return map(int, resolution.split('x'))
