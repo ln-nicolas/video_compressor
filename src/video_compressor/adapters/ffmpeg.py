@@ -1,5 +1,6 @@
 from shutil import which
 import subprocess
+import os
 
 from ..exceptions import MissingLibraryError, InvalidVideoInput
 
@@ -176,3 +177,6 @@ class ffmpegAdapter():
         duration, error = process(self.ffprobe.duration)
         duration = duration.replace('\n', '')
         return float(duration) * 1000
+
+    def get_size(self):
+        return os.path.getsize(self._input)

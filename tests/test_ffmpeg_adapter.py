@@ -85,6 +85,12 @@ def test_get_video_duration():
     assert d == 4871.533
 
 
+def test_get_video_size():
+    video = ffmpegAdapter(input='./tests/sample.mp4')
+    s = video.get_size()
+    assert s == 1507453
+
+
 def test_mute_a_video(tempfile):
     video = ffmpegAdapter(input='./tests/sample.mp4')
 
