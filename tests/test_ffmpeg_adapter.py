@@ -5,6 +5,7 @@ import os
 import shutil
 
 from video_compressor.adapters.ffmpeg import ffmpegAdapter
+from video_compressor.compressor import compressToTargetSize
 from video_compressor.exceptions import MissingLibraryError, InvalidVideoInput
 
 __author__ = "Lenselle Nicolas"
@@ -69,7 +70,11 @@ def test_get_video_audio():
 
 
 def test_get_video_bitrate():
-    assert ffmpegAdapter(input='./tests/sample.mp4').get_bitrate() == 2200634
+    assert ffmpegAdapter(input='./tests/sample.mp4').get_video_bitrate() == 2200634
+
+
+def test_get_audio_bitrate():
+    assert ffmpegAdapter(input='./tests/sample.mp4').get_audio_bitrate() == 133274
 
 
 def test_get_video_resolution():
@@ -137,4 +142,25 @@ def test_reduce_video_bitrate(tempfile):
     video = ffmpegAdapter(input='./tests/sample.mp4')
 
     video.bitrate(1000000).export(sample1Mbs)
-    assert ffmpegAdapter(input=sample1Mbs).get_bitrate() < 1000000
+    assert ffmpegAdapter(input=sample1Mbs).get_video_bitrate() < 1000000
+
+
+# def test_reduce_video_to_specific_size(tempfile):
+
+#     # 1 507 453 is ./tests/sample.mp4 original size
+
+#     targetSize = 0.5 * 1000 * 1000 * 8  # 500kB
+#     sample500k = tempfile(filename='sample-500k.mp4')
+
+#     video = ffmpegAdapter(input='./tests/sample.mp4')
+#     compressToTargetSize(video, targetSize, sample500k)
+
+#     assert ffmpegAdapter(sample500k).get_size() == targetSize
+
+# target_size=$(( 25 * 1000 * 1000 * 8 )) # 25MB in bits
+# length=`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp4`
+# length_round_up=$(( ${length%.*} + 1 ))
+# total_bitrate=$(( $target_size / $length_round_up ))
+# audio_bitrate=$(( 128 * 1000 )) # 128k bit rate
+# video_bitrate=$(( $total_bitrate - $audio_bitrate ))
+# ffmpeg -i input.mp4 -b:v $video_bitrate -maxrate:v $video_bitrate -bufsize:v $(( $target_size / 20 )) -b:a $audio_bitrate output.mp4

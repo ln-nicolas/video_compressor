@@ -31,8 +31,12 @@ class ffprobeCmdBuilder():
         return f"{self.ffprobe} -show_entries stream=width,height {self.input}"
 
     @property
-    def bitrate(self):
+    def video_bitrate(self):
         return f"{self.ffprobe} -show_entries stream=bit_rate {self.input}"
+
+    @property
+    def audio_bitrate(self):
+        return f"{self.ffprobe} -select_streams a:0 -show_entries stream=bit_rate {self.input}"
 
     @property
     def duration(self):
@@ -169,8 +173,12 @@ class ffmpegAdapter():
         resolution, error = process(self.ffprobe.resolution)
         return map(int, resolution.split(','))
 
-    def get_bitrate(self):
-        bitrate, error = process(self.ffprobe.bitrate)
+    def get_video_bitrate(self):
+        bitrate, error = process(self.ffprobe.video_bitrate)
+        return int(bitrate)
+
+    def get_audio_bitrate(self):
+        bitrate, error = process(self.ffprobe.audio_bitrate)
         return int(bitrate)
 
     def get_duration(self):
