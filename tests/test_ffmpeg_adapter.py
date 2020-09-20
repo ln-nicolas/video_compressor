@@ -72,11 +72,17 @@ def test_get_video_bitrate():
     assert ffmpegAdapter(input='./tests/sample.mp4').get_bitrate() == 2200634
 
 
-def test_get_video_size():
+def test_get_video_resolution():
     video = ffmpegAdapter(input='./tests/sample.mp4')
     w, h = video.get_resolution()
     assert h == 540
     assert w == 960
+
+
+def test_get_video_duration():
+    video = ffmpegAdapter(input='./tests/sample.mp4')
+    d = video.get_duration()
+    assert d == 4871.533
 
 
 def test_mute_a_video(tempfile):

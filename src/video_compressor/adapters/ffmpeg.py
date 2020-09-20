@@ -33,6 +33,10 @@ class ffprobeCmdBuilder():
     def bitrate(self):
         return f"{self.ffprobe} -show_entries stream=bit_rate {self.input}"
 
+    @property
+    def duration(self):
+        return f"{self.ffprobe} -show_entries stream=duration {self.input}"
+
 
 class ffmpegCmdBuilder():
 
@@ -55,7 +59,7 @@ class ffmpegCmdBuilder():
 
     @property
     def ffmpeg(self):
-        return f"{self.bin_ffmpeg} -i {self.input} "
+        return f"{self.bin_ffmpeg} -i {self.input} -q:v 0"
 
     @property
     def mutefilter(self):
@@ -167,3 +171,8 @@ class ffmpegAdapter():
     def get_bitrate(self):
         bitrate, error = process(self.ffprobe.bitrate)
         return int(bitrate)
+
+    def get_duration(self):
+        duration, error = process(self.ffprobe.duration)
+        duration = duration.replace('\n', '')
+        return float(duration) * 1000
