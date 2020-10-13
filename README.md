@@ -1,9 +1,9 @@
-A simple helper to compress video. 
+A simple python helper to compress video. 
 
 ## Installation 
 
-Please install [ffmpeg](https://ffmpeg.org/)
-Then install video_compressor 
+Please install [ffmpeg bin](https://ffmpeg.org/)
+then install video_compressor 
 ```
 pip install video_compressor
 ```
