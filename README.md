@@ -16,7 +16,7 @@ from video_compressor import VideoCompressor, VideoInfo
 
 VideoCompressor(input='./example.mp4')
     .bitrate(1000000)
-    .bitrate(640, -1)
+    .scale(640, -1)
     .export('./export.mp4')
 
 VideoInfo('./export.mp4').getResolution() 
