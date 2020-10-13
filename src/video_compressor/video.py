@@ -29,7 +29,8 @@ class VideoInfo():
 
     def getSize(self):
         return self.adapter.getSize()
-    
+
+
 class VideoCompressor():
 
     @classmethod
@@ -37,8 +38,8 @@ class VideoCompressor():
         return ffmpegVideoCompressorAdapter
 
     def __init__(
-        self, 
-        input=None, 
+        self,
+        input=None,
         mute=None,
         scale=None,
         bitrate=None,
@@ -91,6 +92,3 @@ class VideoCompressor():
         audio_bitrate = info.getAudioBitrate()
         video_bitrate = total_bitrate - audio_bitrate
         self.bitrate(video_bitrate).export(output)
-
-
-

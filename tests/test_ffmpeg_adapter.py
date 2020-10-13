@@ -67,11 +67,14 @@ def test_get_video_audio():
     assert VideoInfo('./tests/sample.mp4').volumedetect() is False
     assert VideoInfo('./tests/mute-sample.mp4').volumedetect() is True
 
+
 def test_getVideoBitrate():
     assert VideoInfo('./tests/sample.mp4').getVideoBitrate() == 2200634
 
+
 def test_getAudioBitrate():
     assert VideoInfo('./tests/sample.mp4').getAudioBitrate() == 133274
+
 
 def test_get_video_resolution():
     video = VideoInfo('./tests/sample.mp4')
@@ -112,7 +115,6 @@ def test_scale_video(tempfile):
     w, h = VideoInfo('./tests/sample.mp4').getResolution()
     assert w == 960
     assert h == 540
-
 
     video = VideoCompressor(input='./tests/sample.mp4')
     video.scale(96, 54).export(sample54x96)

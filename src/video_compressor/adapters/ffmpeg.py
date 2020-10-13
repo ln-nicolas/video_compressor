@@ -12,10 +12,12 @@ def process(command):
         (process.stderr or b'').decode("utf-8")
     )
 
+
 def check_bin(bin):
     if which(bin) is None:
         raise MissingLibraryError
     return bin
+
 
 class ffprobeCmdBuilder():
 
@@ -96,14 +98,12 @@ class ffmpegCmdBuilder():
         return f'{self.ffmpeg} {self.mutefilter} {self.scalefilter} {self.bitratefilter} {output}'
 
 
-
 class ffmpegProbeVideoInfoAdapter():
 
     def __init__(self, input=None, ffmpeg_bin='ffmpeg', ffprobe_bin='ffprobe'):
         self.input = input
         self.ffprobe = ffprobeCmdBuilder(input=input, bin=ffprobe_bin)
         self.ffmpeg = ffmpegCmdBuilder(input=input, bin=ffmpeg_bin)
-
 
     def check_video_integrity(self, input):
         trace, error = process(self.ffmpeg.integrity)
@@ -162,7 +162,3 @@ class ffmpegVideoCompressorAdapter():
             'bitrate': self._bitrate
         })
         process(ffmpeg.export(output))
-
-
-
-    
