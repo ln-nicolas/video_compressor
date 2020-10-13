@@ -76,7 +76,7 @@ class ffmpegCmdBuilder():
 
     @property
     def bitratefilter(self):
-        return f'-b:v {self.bitrate}' if self.bitrate else ''
+        return f'-maxrate:v {self.bitrate}' if self.bitrate else ''
 
     @property
     def pipestdout(self):
@@ -175,11 +175,11 @@ class ffmpegAdapter():
 
     def get_video_bitrate(self):
         bitrate, error = process(self.ffprobe.video_bitrate)
-        return int(bitrate)
+        return int(bitrate) if bitrate else 0
 
     def get_audio_bitrate(self):
         bitrate, error = process(self.ffprobe.audio_bitrate)
-        return int(bitrate)
+        return int(bitrate) if bitrate else 0
 
     def get_duration(self):
         duration, error = process(self.ffprobe.duration)
