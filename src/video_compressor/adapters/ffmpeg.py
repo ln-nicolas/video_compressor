@@ -59,12 +59,16 @@ class ffmpegCmdBuilder():
         mute=None,
         scale=None,
         bitrate=None,
+        crop_origin=None,
+        crop_size=None
     ):
         self.input = input
         self.bin = check_bin(bin)
         self.mute = mute
         self.scale = scale
         self.bitrate = bitrate
+        self.crop_origin = crop_origin
+        self.crop_size = crop_size
 
     @property
     def ffmpeg(self):
@@ -83,6 +87,16 @@ class ffmpegCmdBuilder():
         return f'-maxrate:v {self.bitrate}' if self.bitrate else ''
 
     @property
+    def cropfilter(self):
+        if not self.crop_origin and not self.crop_size:
+            return ""
+
+        x, y = self.crop_origin
+        w, h = self.crop_size 
+
+        return f'-filter:v  "crop={w}:{h}:{x}:{y}"'
+
+    @property
     def pipestdout(self):
         return '-f null /dev/null 2>&1'
 
@@ -95,7 +109,7 @@ class ffmpegCmdBuilder():
         return f"{self.ffmpeg} -af 'volumedetect' {self.pipestdout}"
 
     def export(self, output):
-        return f'{self.ffmpeg} {self.mutefilter} {self.scalefilter} {self.bitratefilter} {output}'
+        return f'{self.ffmpeg} {self.mutefilter} {self.scalefilter} {self.bitratefilter} {self.cropfilter} {output}'
 
 
 class ffmpegProbeVideoInfoAdapter():
@@ -145,6 +159,8 @@ class ffmpegVideoCompressorAdapter():
         mute=None,
         scale=None,
         bitrate=None,
+        crop_origin=None,
+        crop_size=None,
     ):
         self._bin_ffmpeg = bin_ffmpeg
         self._bin_ffprobe = bin_ffprobe
@@ -152,6 +168,8 @@ class ffmpegVideoCompressorAdapter():
         self._mute = mute
         self._scale = scale
         self._bitrate = bitrate
+        self._crop_origin = crop_origin
+        self._crop_size = crop_size
 
     def export(self, output):
         ffmpeg = ffmpegCmdBuilder(**{
@@ -159,6 +177,8 @@ class ffmpegVideoCompressorAdapter():
             'bin': self._bin_ffmpeg,
             'mute': self._mute,
             'scale': self._scale,
-            'bitrate': self._bitrate
+            'bitrate': self._bitrate,
+            'crop_origin': self._crop_origin,
+            'crop_size': self._crop_size
         })
         process(ffmpeg.export(output))

@@ -46,7 +46,8 @@ try:
     from pkg_resources import parse_version
 
     cmd_line_template = "sphinx-apidoc -f -o {outputdir} {moduledir}"
-    cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
+    cmd_line = cmd_line_template.format(
+        outputdir=output_dir, moduledir=module_dir)
 
     args = cmd_line.split(" ")
     if parse_version(sphinx.__version__) >= parse_version('1.7'):
@@ -56,7 +57,7 @@ try:
 except Exception as e:
     print("Running `sphinx-apidoc` failed!\n{}".format(e))
 
-# -- General configuration -----------------------------------------------------
+# -- General configuration -----------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
@@ -131,7 +132,7 @@ pygments_style = 'sphinx'
 # keep_warnings = False
 
 
-# -- Options for HTML output ---------------------------------------------------
+# -- Options for HTML output ---------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
@@ -219,7 +220,7 @@ html_static_path = ['_static']
 htmlhelp_basename = 'video_compressor-doc'
 
 
-# -- Options for LaTeX output --------------------------------------------------
+# -- Options for LaTeX output --------------------------------------------
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -259,7 +260,7 @@ latex_documents = [
 # If false, no module index is generated.
 # latex_domain_indices = True
 
-# -- External mapping ------------------------------------------------------------
+# -- External mapping ----------------------------------------------------
 python_version = '.'.join(map(str, sys.version_info[0:2]))
 intersphinx_mapping = {
     'sphinx': ('http://www.sphinx-doc.org/en/stable', None),

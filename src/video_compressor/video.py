@@ -43,12 +43,16 @@ class VideoCompressor():
         mute=None,
         scale=None,
         bitrate=None,
+        crop_origin=None,
+        crop_size=None,
         adapter=None
     ):
         self._input = input
         self._mute = mute
         self._scale = scale
         self._bitrate = bitrate
+        self._crop_origin = crop_origin
+        self._crop_size = crop_size
 
         self.VideoCompressorAdapter = adapter or VideoCompressor.defaultCompressorAdapter()
 
@@ -76,19 +80,24 @@ class VideoCompressor():
     def bitrate(self, bitrate):
         return self.update(bitrate=bitrate)
 
+    def crop(self, origin, size):
+        return self.update(crop_origin=origin, crop_size=size)
+
     def export(self, output):
         adapter = self.VideoCompressorAdapter(
             input=self._input,
             mute=self._mute,
             scale=self._scale,
-            bitrate=self._bitrate
+            bitrate=self._bitrate,
+            crop_origin=self._crop_origin,
+            crop_size=self._crop_size
         )
         return adapter.export(output)
 
     def compressToTargetSize(self, targetSize, output):
         info = VideoInfo(self._input)
         length = info.getDuration() / 1000
-        total_bitrate = targetSize / (length+1)
+        total_bitrate = targetSize / (length + 1)
         audio_bitrate = info.getAudioBitrate()
         video_bitrate = total_bitrate - audio_bitrate
         self.bitrate(video_bitrate).export(output)

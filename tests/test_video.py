@@ -17,13 +17,13 @@ __license__ = "mit"
 
 @pytest.fixture(scope="function")
 def tempdir():
-    return os.getcwd()+'/tmp/'
+    return os.getcwd() + '/tmp/'
 
 
 @pytest.fixture(scope="function")
 def tempfile(tempdir):
     def path(filename=''):
-        return tempdir+filename
+        return tempdir + filename
     return path
 
 
@@ -144,6 +144,20 @@ def test_reduce_video_bitrate(tempfile):
     assert VideoInfo(sample1Mbs).getVideoBitrate() < 1000000
 
 
+def test_crop_video(tempfile):
+
+    sample1Mbs = tempfile(filename='sample-crop.mp4')
+    video = VideoCompressor(input='./tests/sample.mp4')
+    video.crop(origin=(10, 10), size=(100, 200)).export(sample1Mbs)
+
+    w, h = VideoInfo(sample1Mbs).getResolution()
+    assert w == 100
+    assert h == 200
+
+def test_crop_video_checking_pixel(tempfile):
+    # Test to compare pixel value from original video and crop video
+    pass
+
 def test_reduce_video_to_specific_size(tempfile):
 
     # 1 507 453 is ./tests/sample.mp4 original size
@@ -162,4 +176,5 @@ def test_reduce_video_to_specific_size(tempfile):
 # total_bitrate=$(( $targetSize / $length_round_up ))
 # audio_bitrate=$(( 128 * 1000 )) # 128k bit rate
 # video_bitrate=$(( $total_bitrate - $audio_bitrate ))
-# ffmpeg -i input.mp4 -b:v $video_bitrate -maxrate:v $video_bitrate -bufsize:v $(( $targetSize / 20 )) -b:a $audio_bitrate output.mp4
+# ffmpeg -i input.mp4 -b:v $video_bitrate -maxrate:v $video_bitrate
+# -bufsize:v $(( $targetSize / 20 )) -b:a $audio_bitrate output.mp4
