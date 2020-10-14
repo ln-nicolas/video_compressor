@@ -1,3 +1,4 @@
+import os
 from video_compressor.adapters.ffmpeg import ffmpegVideoCompressorAdapter, ffmpegProbeVideoInfoAdapter
 
 
@@ -24,11 +25,31 @@ class VideoInfo():
     def getResolution(self):
         return self.adapter.getResolution()
 
-    def getDuration(self):
-        return self.adapter.getDuration()
+    def getDurationInMilliseconds(self):
+        return self.adapter.getDurationInMilliseconds()
+
+    def getDurationInSeconds(self):
+        milliseconds = self.adapter.getDurationInMilliseconds()
+        return round(milliseconds/1000)
 
     def getSize(self):
         return self.adapter.getSize()
+
+
+class VideoInfoCollection():
+
+    def __init__(self, videos = []):
+        self._videos = videos
+
+    def __len__(self):
+        return len(self._videos)
+
+    def append(self, video):
+        self._videos.append(video)
+        return self
+
+    def getDurationInMilliseconds(self):
+        return sum(map(lambda s: s.getDurationInMilliseconds(), self._videos))
 
 
 class VideoCompressor():
@@ -55,6 +76,21 @@ class VideoCompressor():
         self._crop_size = crop_size
 
         self.VideoCompressorAdapter = adapter or VideoCompressor.defaultCompressorAdapter()
+
+    @property
+    def compressor_adapter(self):
+        return self.VideoCompressorAdapter(
+            input=self._input,
+            mute=self._mute,
+            scale=self._scale,
+            bitrate=self._bitrate,
+            crop_origin=self._crop_origin,
+            crop_size=self._crop_size
+        )
+
+    @property
+    def info(self):
+        return VideoInfo(self._input)
 
     def options(self):
         return {
@@ -84,20 +120,23 @@ class VideoCompressor():
         return self.update(crop_origin=origin, crop_size=size)
 
     def export(self, output):
-        adapter = self.VideoCompressorAdapter(
-            input=self._input,
-            mute=self._mute,
-            scale=self._scale,
-            bitrate=self._bitrate,
-            crop_origin=self._crop_origin,
-            crop_size=self._crop_size
-        )
-        return adapter.export(output)
+        return self.compressor_adapter.export(output)
 
     def compressToTargetSize(self, targetSize, output):
-        info = VideoInfo(self._input)
-        length = info.getDuration() / 1000
+        length = self.info.getDurationInMilliseconds() / 1000
         total_bitrate = targetSize / (length + 1)
-        audio_bitrate = info.getAudioBitrate()
+        audio_bitrate = self.info.getAudioBitrate()
         video_bitrate = total_bitrate - audio_bitrate
         self.bitrate(video_bitrate).export(output)
+
+    def slices(self, output, seconds=1):
+        count = self.info.getDurationInSeconds() // seconds
+
+        videos = VideoInfoCollection()
+        for slice_index in range(0, count):
+            filename, ext = os.path.splitext(output)
+            slice_filename = f'{filename}-{slice_index}{ext}'
+            self.compressor_adapter.slice(slice_filename, start=slice_index, duration=seconds)
+            videos.append(VideoInfo(slice_filename))
+
+        return videos

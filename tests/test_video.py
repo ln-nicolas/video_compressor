@@ -21,7 +21,7 @@ def tempdir():
 
 
 @pytest.fixture(scope="function")
-def tempfile(tempdir):
+def temp(tempdir):
     def path(filename=''):
         return tempdir + filename
     return path
@@ -83,11 +83,15 @@ def test_get_video_resolution():
     assert w == 960
 
 
-def test_get_video_duration():
+def test_get_video_duration_():
     video = VideoInfo('./tests/sample.mp4')
-    d = video.getDuration()
+    d = video.getDurationInMilliseconds()
     assert d == 4871.533
 
+def test_get_video_duration_in_seconds():
+    video = VideoInfo('./tests/sample.mp4')
+    d = video.getDurationInSeconds()
+    assert d == 5
 
 def test_get_video_size():
     video = VideoInfo('./tests/sample.mp4')
@@ -95,11 +99,11 @@ def test_get_video_size():
     assert s == 1507453
 
 
-def test_mute_a_video(tempfile):
+def test_mute_a_video(temp):
     video = VideoCompressor(input='./tests/sample.mp4')
 
-    sample_copy = tempfile(filename='sample-copy.mp4')
-    sample_muted = tempfile(filename='sample-muted.mp4')
+    sample_copy = temp(filename='sample-copy.mp4')
+    sample_muted = temp(filename='sample-muted.mp4')
 
     video.export(sample_copy)
     video.mute(True).export(sample_muted)
@@ -108,9 +112,9 @@ def test_mute_a_video(tempfile):
     assert VideoInfo(sample_muted).volumedetect() is True
 
 
-def test_scale_video(tempfile):
+def test_scale_video(temp):
 
-    sample54x96 = tempfile(filename='sample-54x96.mp4')
+    sample54x96 = temp(filename='sample-54x96.mp4')
 
     w, h = VideoInfo('./tests/sample.mp4').getResolution()
     assert w == 960
@@ -123,9 +127,9 @@ def test_scale_video(tempfile):
     assert h == 54
 
 
-def test_scale_video_keep_ratio(tempfile):
+def test_scale_video_keep_ratio(temp):
 
-    sample640 = tempfile(filename='sample-54x96.mp4')
+    sample640 = temp(filename='sample-54x96.mp4')
 
     w1, h1 = VideoInfo('./tests/sample.mp4').getResolution()
 
@@ -135,18 +139,18 @@ def test_scale_video_keep_ratio(tempfile):
     assert w2 // h2 == w1 // h1
 
 
-def test_reduce_video_bitrate(tempfile):
+def test_reduce_video_bitrate(temp):
 
-    sample1Mbs = tempfile(filename='sample-1mbs.mp4')
+    sample1Mbs = temp(filename='sample-1mbs.mp4')
     video = VideoCompressor(input='./tests/sample.mp4')
     video.bitrate(1000000).export(sample1Mbs)
 
     assert VideoInfo(sample1Mbs).getVideoBitrate() < 1000000
 
 
-def test_crop_video(tempfile):
+def test_crop_video(temp):
 
-    sample1Mbs = tempfile(filename='sample-crop.mp4')
+    sample1Mbs = temp(filename='sample-crop.mp4')
     video = VideoCompressor(input='./tests/sample.mp4')
     video.crop(origin=(10, 10), size=(100, 200)).export(sample1Mbs)
 
@@ -154,16 +158,30 @@ def test_crop_video(tempfile):
     assert w == 100
     assert h == 200
 
-def test_crop_video_checking_pixel(tempfile):
+def test_crop_video_checking_pixel(temp):
     # Test to compare pixel value from original video and crop video
     pass
 
-def test_reduce_video_to_specific_size(tempfile):
+
+def test_slice_video_by_1_seconds(temp):
+    
+    video = VideoCompressor(input='./tests/sample.mp4')
+
+    slices = video.slices(temp('sample-slice.mp4'), seconds=1)
+    assert len(slices) == video.info.getDurationInSeconds()
+    assert round(slices.getDurationInMilliseconds() * 100) == round(video.info.getDurationInMilliseconds() * 100)
+
+    slices = video.slices(temp('sample-slice025.mp4'), seconds=2)
+    assert len(slices) == video.info.getDurationInSeconds() // 2
+    assert round(slices.getDurationInMilliseconds() * 100) == round(video.info.getDurationInMilliseconds() * 100)
+
+
+def test_reduce_video_to_specific_size(temp):
 
     # 1 507 453 is ./tests/sample.mp4 original size
 
     maxSize = 0.5 * 1000 * 1000 * 8  # 0.5MB in bits
-    sample500k = tempfile(filename='sample-500k.mp4')
+    sample500k = temp(filename='sample-500k.mp4')
 
     video = VideoCompressor(input='./tests/sample.mp4')
     video.compressToTargetSize(maxSize, sample500k)

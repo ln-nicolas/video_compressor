@@ -108,9 +108,15 @@ class ffmpegCmdBuilder():
     def volumedetect(self):
         return f"{self.ffmpeg} -af 'volumedetect' {self.pipestdout}"
 
-    def export(self, output):
-        return f'{self.ffmpeg} {self.mutefilter} {self.scalefilter} {self.bitratefilter} {self.cropfilter} {output}'
+    @property
+    def filters(self):
+        return f'{self.mutefilter} {self.scalefilter} {self.bitratefilter} {self.cropfilter}'
 
+    def export(self, output):
+        return f'{self.ffmpeg} {self.filters} {output}'
+
+    def slice(self, output, start, duration):
+        return f'{self.ffmpeg} {self.filters} -ss {start} -t {duration} {output}'
 
 class ffmpegProbeVideoInfoAdapter():
 
@@ -140,7 +146,7 @@ class ffmpegProbeVideoInfoAdapter():
         bitrate, error = process(self.ffprobe.audio_bitrate)
         return int(bitrate) if bitrate else 0
 
-    def getDuration(self):
+    def getDurationInMilliseconds(self):
         duration, error = process(self.ffprobe.duration)
         duration = duration.replace('\n', '')
         return float(duration) * 1000
@@ -171,8 +177,9 @@ class ffmpegVideoCompressorAdapter():
         self._crop_origin = crop_origin
         self._crop_size = crop_size
 
-    def export(self, output):
-        ffmpeg = ffmpegCmdBuilder(**{
+    @property
+    def ffmpeg(self):
+        return ffmpegCmdBuilder(**{
             'input': self._input,
             'bin': self._bin_ffmpeg,
             'mute': self._mute,
@@ -181,4 +188,9 @@ class ffmpegVideoCompressorAdapter():
             'crop_origin': self._crop_origin,
             'crop_size': self._crop_size
         })
-        process(ffmpeg.export(output))
+
+    def export(self, output):
+        process(self.ffmpeg.export(output))
+
+    def slice(self, output, start, duration):
+        process(self.ffmpeg.slice(output, start, duration))
