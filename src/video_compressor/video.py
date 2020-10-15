@@ -187,3 +187,4 @@ class VideoCompressor():
         for setting in settings:
             video = self.update(**setting)
             video.export(output)
+            yield video
