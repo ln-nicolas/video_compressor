@@ -73,6 +73,7 @@ class VideoCompressor():
         crop_origin=None,
         crop_size=None,
         fps=None,
+        suffix="",
         adapter=None,
     ):
         self._input = input
@@ -82,6 +83,7 @@ class VideoCompressor():
         self._crop_origin = crop_origin
         self._crop_size = crop_size
         self._fps = fps
+        self._suffix = suffix
 
         self.VideoCompressorAdapter = adapter or VideoCompressor.defaultCompressorAdapter()
 
@@ -137,7 +139,8 @@ class VideoCompressor():
         return self.update(fps=fps)
 
     def export(self, output):
-        return self.compressor_adapter.export(output)
+        filename, ext = os.path.splitext(output)
+        return self.compressor_adapter.export(f'{filename}{self._suffix}{ext}')
 
     def compressToTargetSize(self, targetSize, output):
         length = self.info.getDurationInMilliseconds() / 1000
@@ -149,7 +152,7 @@ class VideoCompressor():
     def slice(self, output, stepInMilliseconds=1000):
         
         videos = VideoInfoCollection()
-        filename, ext = os.path.splitext(output)
+        path, ext = os.path.splitext(output)
         durationInMilliseconds = self.info.getDurationInMilliseconds()
 
         steps = vfunctions.rangeSliceBySteps(
@@ -160,9 +163,13 @@ class VideoCompressor():
 
         for i, step in enumerate(steps):
             start, duration = step
-            filename = f'{filename}-{i}{ext}'
-            self.compressor_adapter.slice(filename, start, duration)
-            videos.append(filename)
+            step_path = f'{path}-{i}{ext}'
+            self.compressor_adapter.slice(step_path, start, duration)
+            videos.append(step_path)
 
         return videos
 
+    def exportCollection(self, output, settings):
+        for setting in settings:
+            video = self.update(**setting)
+            video.export(output)

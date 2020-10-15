@@ -243,6 +243,27 @@ def test_reduce_video_to_specific_size(temp):
 
     assert VideoInfo(sample500k).getSize() < (maxSize / 8)
 
+
+def test_export_video_collection(temp):
+
+    settings = [
+        {'scale':[480, -1], 'bitrate': 200_000, 'fps': 24, 'suffix':'@sm'},
+        {'scale':[640, -1], 'bitrate': 1_000_000, 'fps': 24, 'suffix':'@md'},
+        {'scale':[960, -1], 'bitrate': 2_000_000, 'fps': 24, 'suffix':'@lg'},
+        {'scale':[1280, -1], 'bitrate': 3_000_000, 'fps': 24, 'suffix':'@xl'},
+    ]
+
+    video = VideoCompressor('./tests/sample.mp4')
+    video.exportCollection(temp('sample.mp4'), settings)
+
+    for setting in settings:
+        suffix = setting['suffix']
+        export = VideoInfo(temp(f'sample{suffix}.mp4'))
+        assert list(export.getResolution())[0] == setting['scale'][0]
+        assert export.getFramePerSeconds() == setting['fps']
+        assert export.getVideoBitrate() < setting['bitrate']
+
+
 # targetSize=$(( 25 * 1000 * 1000 * 8 )) # 25MB in bits
 # length=`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp4`
 # length_round_up=$(( ${length%.*} + 1 ))
