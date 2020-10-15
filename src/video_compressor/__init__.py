@@ -10,4 +10,4 @@ except DistributionNotFound:
 finally:
     del get_distribution, DistributionNotFound
 
-from .video import VideoCompressor, VideoInfo
+from .video import VideoCompressor, VideoInfo, VideoInfoCollection

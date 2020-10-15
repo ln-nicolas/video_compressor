@@ -5,7 +5,7 @@ import os
 import shutil
 
 from video_compressor.exceptions import MissingLibraryError, InvalidVideoInput
-from video_compressor import VideoCompressor, VideoInfo
+from video_compressor import VideoCompressor, VideoInfo, VideoInfoCollection
 
 __author__ = "Lenselle Nicolas"
 __copyright__ = "Lenselle Nicolas"
@@ -85,8 +85,8 @@ def test_get_video_resolution():
 
 def test_get_video_duration_():
     video = VideoInfo('./tests/sample.mp4')
-    d = video.getDurationInMilliseconds()
-    assert d == 4871.533
+    d = video.getDurationInMicroseconds()
+    assert d == 4_871_533
 
 def test_get_video_duration_in_seconds():
     video = VideoInfo('./tests/sample.mp4')
@@ -167,14 +167,11 @@ def test_slice_video_by_1_seconds(temp):
     
     video = VideoCompressor(input='./tests/sample.mp4')
 
-    slices = video.slices(temp('sample-slice.mp4'), seconds=1)
-    assert len(slices) == video.info.getDurationInSeconds()
-    assert round(slices.getDurationInMilliseconds() * 100) == round(video.info.getDurationInMilliseconds() * 100)
+    slices = video.slice(temp('sample-slice.mp4'), stepInMilliseconds=1000)
+    assert slices.getDurationInMicroseconds() == video.info.getDurationInMicroseconds()
 
-    slices = video.slices(temp('sample-slice025.mp4'), seconds=2)
-    assert len(slices) == video.info.getDurationInSeconds() // 2
-    assert round(slices.getDurationInMilliseconds() * 100) == round(video.info.getDurationInMilliseconds() * 100)
-
+    slices = video.slice(temp('sample-slice025.mp4'), stepInMilliseconds=2000)
+    assert slices.getDurationInMicroseconds() == video.info.getDurationInMicroseconds()
 
 def test_reduce_video_to_specific_size(temp):
 

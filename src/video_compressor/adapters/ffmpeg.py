@@ -146,10 +146,10 @@ class ffmpegProbeVideoInfoAdapter():
         bitrate, error = process(self.ffprobe.audio_bitrate)
         return int(bitrate) if bitrate else 0
 
-    def getDurationInMilliseconds(self):
+    def getDurationInMicroseconds(self):
         duration, error = process(self.ffprobe.duration)
         duration = duration.replace('\n', '')
-        return float(duration) * 1000
+        return round(float(duration) * 1000 * 1000)
 
     def getSize(self):
         return os.path.getsize(self.input)
@@ -192,5 +192,7 @@ class ffmpegVideoCompressorAdapter():
     def export(self, output):
         process(self.ffmpeg.export(output))
 
-    def slice(self, output, start, duration):
-        process(self.ffmpeg.slice(output, start, duration))
+    def slice(self, output, startInMillisecond, durationInMicroseconds):
+        start_str = str(round(startInMillisecond / 1000, 3))
+        duration_str = str(round(durationInMicroseconds / 1000, 3))
+        process(self.ffmpeg.slice(output, start_str, duration_str))

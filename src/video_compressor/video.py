@@ -1,6 +1,6 @@
 import os
 from video_compressor.adapters.ffmpeg import ffmpegVideoCompressorAdapter, ffmpegProbeVideoInfoAdapter
-
+import video_compressor.functions as vfunctions
 
 class VideoInfo():
 
@@ -25,11 +25,15 @@ class VideoInfo():
     def getResolution(self):
         return self.adapter.getResolution()
 
+    def getDurationInMicroseconds(self):
+        return self.adapter.getDurationInMicroseconds()
+
     def getDurationInMilliseconds(self):
-        return self.adapter.getDurationInMilliseconds()
+        microseconds = self.getDurationInMicroseconds()
+        return round(microseconds/1000)
 
     def getDurationInSeconds(self):
-        milliseconds = self.adapter.getDurationInMilliseconds()
+        milliseconds = self.getDurationInMilliseconds()
         return round(milliseconds/1000)
 
     def getSize(self):
@@ -38,18 +42,17 @@ class VideoInfo():
 
 class VideoInfoCollection():
 
-    def __init__(self, videos = []):
-        self._videos = videos
+    def __init__(self, videos=None):
+        self._videos = [VideoInfo(video) for video in (videos or [])]
 
     def __len__(self):
         return len(self._videos)
 
     def append(self, video):
-        self._videos.append(video)
-        return self
+        self._videos.append(VideoInfo(video))
 
-    def getDurationInMilliseconds(self):
-        return sum(map(lambda s: s.getDurationInMilliseconds(), self._videos))
+    def getDurationInMicroseconds(self):
+        return sum(map(lambda s: s.getDurationInMicroseconds(), self._videos))
 
 
 class VideoCompressor():
@@ -129,14 +132,23 @@ class VideoCompressor():
         video_bitrate = total_bitrate - audio_bitrate
         self.bitrate(video_bitrate).export(output)
 
-    def slices(self, output, seconds=1):
-        count = self.info.getDurationInSeconds() // seconds
-
+    def slice(self, output, stepInMilliseconds=1000):
+        
         videos = VideoInfoCollection()
-        for slice_index in range(0, count):
-            filename, ext = os.path.splitext(output)
-            slice_filename = f'{filename}-{slice_index}{ext}'
-            self.compressor_adapter.slice(slice_filename, start=slice_index, duration=seconds)
-            videos.append(VideoInfo(slice_filename))
+        filename, ext = os.path.splitext(output)
+        durationInMilliseconds = self.info.getDurationInMilliseconds()
+
+        steps = vfunctions.rangeSliceBySteps(
+            0, 
+            durationInMilliseconds, 
+            stepInMilliseconds
+        )
+
+        for i, step in enumerate(steps):
+            start, duration = step
+            filename = f'{filename}-{i}{ext}'
+            self.compressor_adapter.slice(filename, start, duration)
+            videos.append(filename)
 
         return videos
+
