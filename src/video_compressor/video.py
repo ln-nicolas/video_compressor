@@ -81,6 +81,7 @@ class VideoCompressor():
         crop_size=None,
         fps=None,
         codec_preset=None,
+        quality=None,
         suffix="",
         adapter=None,
     ):
@@ -92,6 +93,7 @@ class VideoCompressor():
         self._crop_size = crop_size
         self._fps = fps
         self._codec_preset = codec_preset
+        self._quality = quality
         self._suffix = suffix
 
         self.VideoCompressorAdapter = adapter or VideoCompressor.defaultCompressorAdapter()
@@ -106,6 +108,7 @@ class VideoCompressor():
             crop_origin=self._crop_origin,
             crop_size=self._crop_size,
             codec_preset=self._codec_preset,
+            quality=self._quality,
             fps=self._fps
         )
 
@@ -122,6 +125,7 @@ class VideoCompressor():
             'crop_origin': self._crop_origin,
             'crop_size': self._crop_size,
             'codec_preset': self._codec_preset,
+            'quality': self._quality,
             'fps': self._fps
         }
 
@@ -151,6 +155,9 @@ class VideoCompressor():
 
     def codecPreset(self, codec_preset):
         return self.update(codec_preset=codec_preset)
+
+    def quality(self, quality):
+        return self.update(quality=quality)
 
     def export(self, output):
         filename, ext = os.path.splitext(output)

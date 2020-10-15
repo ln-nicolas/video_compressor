@@ -234,7 +234,8 @@ def test_slice_video_by_1_seconds(temp):
 def test_export_video_collection(temp):
 
     settings = [
-        {'scale':[480, -1], 'bitrate': 200_000, 'fps': 24, 'suffix':'@sm'},
+        {'codec_preset': 'h264WebVBR', 'scale':[480, -1], 'bitrate': 200_000, 'fps': 24, 'suffix':'@sm'},
+        {'codec_preset': 'h264WebVBR', 'scale':[480, -1], 'bitrate': 200_000, 'fps': 24, 'quality':'low', 'suffix':'@sm+low'},
         {'scale':[640, -1], 'bitrate': 1_000_000, 'fps': 24, 'suffix':'@md'},
         {'scale':[960, -1], 'bitrate': 2_000_000, 'fps': 24, 'suffix':'@lg'},
         {'scale':[1280, -1], 'bitrate': 3_000_000, 'fps': 24, 'suffix':'@xl'},
@@ -249,6 +250,8 @@ def test_export_video_collection(temp):
         assert list(export.getResolution())[0] == setting['scale'][0]
         assert export.getFramePerSeconds() == setting['fps']
         assert export.getVideoBitrate() < setting['bitrate']
+
+    assert VideoInfo(temp(f'sample@sm+low.mp4')).getSize() < VideoInfo(temp(f'sample@sm.mp4')).getSize()
 
 
 def test_hs264_webpreset(temp):

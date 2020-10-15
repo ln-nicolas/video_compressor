@@ -68,6 +68,7 @@ class ffmpegCmdBuilder():
         crop_size=None,
         codec_preset=None,
         codec_pass=None,
+        quality=None,
         fps=None
     ):
         self.input = input
@@ -79,6 +80,7 @@ class ffmpegCmdBuilder():
         self.crop_size = crop_size
         self.codec_preset = codec_preset
         self.codec_pass = codec_pass
+        self.quality = quality
         self.fps = fps
 
     @property
@@ -151,9 +153,16 @@ class ffmpegCmdBuilder():
         return f'{self.mutefilter} {self.bitratefilter} {self.vfilters}'
 
     @property
+    def crf_quality(self):
+        return ({
+            'low': '-crf 35',
+            'max': '-crf 0' 
+        }).get(self.quality, '-crf 24')
+
+    @property
     def codec(self):
         if self.codec_preset == 'h264WebVBR':
-            return "-c:v libx264 -crf 35 -profile:v main -level 4.0"
+            return f"-c:v libx264 {self.crf_quality} -profile:v main -level 4.0"
         else:
             return ""
 
@@ -217,6 +226,7 @@ class ffmpegVideoCompressorAdapter():
         crop_origin=None,
         crop_size=None,
         codec_preset=None,
+        quality=None,
         fps=None,
     ):
         self._bin_ffmpeg = bin_ffmpeg
@@ -229,6 +239,7 @@ class ffmpegVideoCompressorAdapter():
         self._crop_size = crop_size
         self._fps = fps
         self._codec_preset = codec_preset
+        self._quality = quality
 
     @property
     def ffmpeg(self):
@@ -241,6 +252,7 @@ class ffmpegVideoCompressorAdapter():
             'crop_origin': self._crop_origin,
             'crop_size': self._crop_size,
             'codec_preset': self._codec_preset,
+            'quality': self._quality,
             'fps': self._fps
         })
 
