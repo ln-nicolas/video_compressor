@@ -91,7 +91,17 @@ class ffmpegCmdBuilder():
 
     @property
     def scalefilter(self):
-        return f'scale={self.scale[0]}:{self.scale[1]}' if self.scale else ''
+
+        if not self.scale:
+            return ""
+
+        w, h = self.scale
+        if w == -1:
+            w = 'trunc(oh/a/2)*2'
+        if h == -1:
+            h = 'trunc(ow/a/2)*2'
+
+        return f'scale={w}:{h}'
 
     @property
     def bitratefilter(self):

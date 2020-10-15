@@ -156,13 +156,6 @@ class VideoCompressor():
         filename, ext = os.path.splitext(output)
         return self.compressor_adapter.export(f'{filename}{self._suffix}{ext}')
 
-    def compressToTargetSize(self, targetSize, output):
-        length = self.info.getDurationInMilliseconds() / 1000
-        total_bitrate = targetSize / (length + 1)
-        audio_bitrate = self.info.getAudioBitrate()
-        video_bitrate = total_bitrate - audio_bitrate
-        self.bitrate(video_bitrate).export(output)
-
     def slice(self, output, stepInMilliseconds=1000):
         
         videos = VideoInfoCollection()

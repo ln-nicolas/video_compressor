@@ -231,19 +231,6 @@ def test_slice_video_by_1_seconds(temp):
     slices = video.slice(temp('sample-slice025.mp4'), stepInMilliseconds=2000)
     assert slices.getDurationInMicroseconds() == video.info.getDurationInMicroseconds()
 
-def test_reduce_video_to_specific_size(temp):
-
-    # 1 507 453 is ./tests/sample.mp4 original size
-
-    maxSize = 0.5 * 1000 * 1000 * 8  # 0.5MB in bits
-    sample500k = temp(filename='sample-500k.mp4')
-
-    video = VideoCompressor(input='./tests/sample.mp4')
-    video.compressToTargetSize(maxSize, sample500k)
-
-    assert VideoInfo(sample500k).getSize() < (maxSize / 8)
-
-
 def test_export_video_collection(temp):
 
     settings = [
@@ -271,6 +258,18 @@ def test_hs264_webpreset(temp):
     video.bitrate('1M').codecPreset('h264WebVBR').export(h264WebPreset)
 
     assert VideoInfo(h264WebPreset).getSize() < video.info.getSize()
+
+
+def test_export_video_with_height_not_divisable_by_two(temp):
+
+    video = VideoCompressor(input='./tests/sample.mp4')
+
+    w, h = video.info.getResolution()
+    video.crop(origin=(0, 0), size=(w, h-1)).export(temp('video-crop.mp4'))
+
+    videoCrop = VideoCompressor(input=temp('video-crop.mp4'))
+    videoCrop.scale(480, -1).export(temp('video-crop2.mp4'))
+    
 
 
 # targetSize=$(( 25 * 1000 * 1000 * 8 )) # 25MB in bits
