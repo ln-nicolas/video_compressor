@@ -43,9 +43,8 @@ fps = info.getFramePerSeconds()
 |------|-----|-----------|
 |mute| ```boolean``` |Mute the video|
 |scale| ```width, height``` | Scale video to given width and height. If ```width = -1``` or ```height = -1``` scale video keeping ration.|
-|crop|```(origin_x, origin_y), (width, height)```| Crop the video from origin point (origin_x, orign_y) with 
+|crop|```(origin_x, origin_y), (width, height)```| Crop the video from origin point (origin_x, orign_y) with given size (width, height)| 
 |bitrate| ```string like 1000000,1000k or 1M```| The average bit/seconds|
-given size (width, height)|
 |fps| ```integer```| Number of frame per seconds |
 |codec_presect|```string 'h264WebVBR'```| Specify a codec preset used to encode video |
 |quality|```string 'low' or 'max'```| Specify a video quality |
