@@ -39,6 +39,9 @@ class VideoInfo():
     def getSize(self):
         return self.adapter.getSize()
 
+    def getFramePerSeconds(self):
+        return self.adapter.getFramePerSeconds()
+
 
 class VideoInfoCollection():
 
@@ -69,7 +72,8 @@ class VideoCompressor():
         bitrate=None,
         crop_origin=None,
         crop_size=None,
-        adapter=None
+        fps=None,
+        adapter=None,
     ):
         self._input = input
         self._mute = mute
@@ -77,6 +81,7 @@ class VideoCompressor():
         self._bitrate = bitrate
         self._crop_origin = crop_origin
         self._crop_size = crop_size
+        self._fps = fps
 
         self.VideoCompressorAdapter = adapter or VideoCompressor.defaultCompressorAdapter()
 
@@ -88,7 +93,8 @@ class VideoCompressor():
             scale=self._scale,
             bitrate=self._bitrate,
             crop_origin=self._crop_origin,
-            crop_size=self._crop_size
+            crop_size=self._crop_size,
+            fps=self._fps
         )
 
     @property
@@ -100,7 +106,10 @@ class VideoCompressor():
             'input': self._input,
             'mute': self._mute,
             'scale': self._scale,
-            'bitrate': self._bitrate
+            'bitrate': self._bitrate,
+            'crop_origin': self._crop_origin,
+            'crop_size': self._crop_size,
+            'fps': self._fps
         }
 
     def update(self, **updates):
@@ -114,6 +123,8 @@ class VideoCompressor():
         return self.update(mute=mute)
 
     def scale(self, *scale):
+        if len(scale) == 1:
+            return self.update(scale=(scale[0], -1))
         return self.update(scale=scale)
 
     def bitrate(self, bitrate):
@@ -121,6 +132,9 @@ class VideoCompressor():
 
     def crop(self, origin, size):
         return self.update(crop_origin=origin, crop_size=size)
+
+    def fps(self, fps):
+        return self.update(fps=fps)
 
     def export(self, output):
         return self.compressor_adapter.export(output)

@@ -49,6 +49,10 @@ class ffprobeCmdBuilder():
     def duration(self):
         return f"{self.ffprobe} -show_entries stream=duration {self.input}"
 
+    @property
+    def fps(self):
+        return f"{self.ffprobe} -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate {self.input}"
+
 
 class ffmpegCmdBuilder():
 
@@ -60,7 +64,8 @@ class ffmpegCmdBuilder():
         scale=None,
         bitrate=None,
         crop_origin=None,
-        crop_size=None
+        crop_size=None,
+        fps=None
     ):
         self.input = input
         self.bin = check_bin(bin)
@@ -69,6 +74,7 @@ class ffmpegCmdBuilder():
         self.bitrate = bitrate
         self.crop_origin = crop_origin
         self.crop_size = crop_size
+        self.fps = fps
 
     @property
     def ffmpeg(self):
@@ -80,11 +86,15 @@ class ffmpegCmdBuilder():
 
     @property
     def scalefilter(self):
-        return f'-vf scale={self.scale[0]}:{self.scale[1]}' if self.scale else ''
+        return f'scale={self.scale[0]}:{self.scale[1]}' if self.scale else ''
 
     @property
     def bitratefilter(self):
         return f'-maxrate:v {self.bitrate}' if self.bitrate else ''
+
+    @property
+    def fpsfilter(self):
+        return f'fps=fps={self.fps}' if self.fps else ''
 
     @property
     def cropfilter(self):
@@ -94,7 +104,7 @@ class ffmpegCmdBuilder():
         x, y = self.crop_origin
         w, h = self.crop_size 
 
-        return f'-filter:v  "crop={w}:{h}:{x}:{y}"'
+        return f'crop={w}:{h}:{x}:{y}'
 
     @property
     def pipestdout(self):
@@ -109,8 +119,21 @@ class ffmpegCmdBuilder():
         return f"{self.ffmpeg} -af 'volumedetect' {self.pipestdout}"
 
     @property
+    def filterv(self):
+        filters = list(filter(lambda f: f != '', [
+            self.cropfilter,
+            self.fpsfilter,
+            self.scalefilter
+        ]))
+
+        if len(filters) > 0:
+            return '-vf "'+ ','.join(filters) + '"'
+        else:
+            return ""
+
+    @property
     def filters(self):
-        return f'{self.mutefilter} {self.scalefilter} {self.bitratefilter} {self.cropfilter}'
+        return f'{self.mutefilter} {self.bitratefilter} {self.filterv}'
 
     def export(self, output):
         return f'{self.ffmpeg} {self.filters} {output}'
@@ -132,7 +155,7 @@ class ffmpegProbeVideoInfoAdapter():
 
     def volumedetect(self):
         volumetrace, error = process(self.ffmpeg.volumedetect)
-        return 'Parsed_volumedetect' not in volumetrace
+        return ('Parsed_volumedetect' in volumetrace)
 
     def getResolution(self):
         resolution, error = process(self.ffprobe.resolution)
@@ -154,6 +177,10 @@ class ffmpegProbeVideoInfoAdapter():
     def getSize(self):
         return os.path.getsize(self.input)
 
+    def getFramePerSeconds(self):
+        rate, error = process(self.ffprobe.fps)
+        return round(eval(rate))
+
 
 class ffmpegVideoCompressorAdapter():
 
@@ -167,6 +194,7 @@ class ffmpegVideoCompressorAdapter():
         bitrate=None,
         crop_origin=None,
         crop_size=None,
+        fps=None,
     ):
         self._bin_ffmpeg = bin_ffmpeg
         self._bin_ffprobe = bin_ffprobe
@@ -176,6 +204,7 @@ class ffmpegVideoCompressorAdapter():
         self._bitrate = bitrate
         self._crop_origin = crop_origin
         self._crop_size = crop_size
+        self._fps = fps
 
     @property
     def ffmpeg(self):
@@ -186,7 +215,8 @@ class ffmpegVideoCompressorAdapter():
             'scale': self._scale,
             'bitrate': self._bitrate,
             'crop_origin': self._crop_origin,
-            'crop_size': self._crop_size
+            'crop_size': self._crop_size,
+            'fps': self._fps
         })
 
     def export(self, output):

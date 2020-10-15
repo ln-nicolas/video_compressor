@@ -64,8 +64,8 @@ def test_error_with_invalid_scale_value():
 
 
 def test_get_video_audio():
-    assert VideoInfo('./tests/sample.mp4').volumedetect() is False
-    assert VideoInfo('./tests/mute-sample.mp4').volumedetect() is True
+    assert VideoInfo('./tests/sample.mp4').volumedetect() is True
+    assert VideoInfo('./tests/mute-sample.mp4').volumedetect() is False
 
 
 def test_getVideoBitrate():
@@ -82,6 +82,11 @@ def test_get_video_resolution():
     assert h == 540
     assert w == 960
 
+
+def test_get_video_fps():
+    video = VideoInfo('./tests/sample.mp4')
+    fps = video.getFramePerSeconds()
+    assert fps == 30
 
 def test_get_video_duration_():
     video = VideoInfo('./tests/sample.mp4')
@@ -108,8 +113,8 @@ def test_mute_a_video(temp):
     video.export(sample_copy)
     video.mute(True).export(sample_muted)
 
-    assert VideoInfo(sample_copy).volumedetect() is False
-    assert VideoInfo(sample_muted).volumedetect() is True
+    assert VideoInfo(sample_copy).volumedetect() is True
+    assert VideoInfo(sample_muted).volumedetect() is False
 
 
 def test_scale_video(temp):
@@ -125,6 +130,15 @@ def test_scale_video(temp):
     w, h = VideoInfo(sample54x96).getResolution()
     assert w == 96
     assert h == 54
+
+def test_reduce_video_fps(temp):
+
+    sample24fps = temp(filename='sample-24fps.mp4')
+    video = VideoCompressor(input='./tests/sample.mp4')
+    video.fps(24).export(sample24fps)
+
+    fps = VideoInfo(sample24fps).getFramePerSeconds()
+    assert fps == 24
 
 
 def test_scale_video_keep_ratio(temp):
@@ -143,20 +157,64 @@ def test_reduce_video_bitrate(temp):
 
     sample1Mbs = temp(filename='sample-1mbs.mp4')
     video = VideoCompressor(input='./tests/sample.mp4')
-    video.bitrate(1000000).export(sample1Mbs)
+    video.bitrate(1_000_000).export(sample1Mbs)
 
-    assert VideoInfo(sample1Mbs).getVideoBitrate() < 1000000
+    assert VideoInfo(sample1Mbs).getVideoBitrate() < 1_000_000
 
 
 def test_crop_video(temp):
 
-    sample1Mbs = temp(filename='sample-crop.mp4')
+    sampleCrop = temp(filename='sample-crop.mp4')
     video = VideoCompressor(input='./tests/sample.mp4')
-    video.crop(origin=(10, 10), size=(100, 200)).export(sample1Mbs)
+    video.crop(origin=(10, 10), size=(100, 200)).export(sampleCrop)
 
-    w, h = VideoInfo(sample1Mbs).getResolution()
+    w, h = VideoInfo(sampleCrop).getResolution()
     assert w == 100
     assert h == 200
+
+def test_combine_filter_crop_fps_bitrate(temp):
+
+    Crop24fps1kBitrate = temp(filename='sample-crop-24ps-1kbitrate.mp4')
+    video = VideoCompressor(input='./tests/sample.mp4')
+    
+    (video
+        .crop(origin=(10, 10), size=(100, 200))
+        .fps(24)
+        .bitrate(1_000_000)
+        .mute(True)
+        .export(Crop24fps1kBitrate)
+    )
+
+    info = VideoInfo(Crop24fps1kBitrate)
+    w, h = video.info.getResolution()
+    fps = video.info.getFramePerSeconds()
+    
+    assert list(info.getResolution()) == [100, 200]
+    assert info.getFramePerSeconds() == 24
+    assert info.getVideoBitrate() < 1_000_000
+
+def test_combine_filter_scale_fps_bitrate_mute(temp):
+
+    Crop24fps1kBitrate = temp(filename='sample-crop-24ps-1kbitrate.mp4')
+    video = VideoCompressor(input='./tests/sample.mp4')
+    
+    (video
+        .scale(640)
+        .fps(24)
+        .bitrate(1_000_000)
+        .mute(True)
+        .export(Crop24fps1kBitrate)
+    )
+
+    info = VideoInfo(Crop24fps1kBitrate)
+    w, h = video.info.getResolution()
+    fps = video.info.getFramePerSeconds()
+    
+    assert list(info.getResolution())[0] == 640
+    assert info.getFramePerSeconds() == 24
+    assert info.getVideoBitrate() < 1_000_000
+    assert info.volumedetect() is False
+
 
 def test_crop_video_checking_pixel(temp):
     # Test to compare pixel value from original video and crop video
