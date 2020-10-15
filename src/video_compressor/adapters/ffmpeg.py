@@ -54,6 +54,7 @@ class ffprobeCmdBuilder():
         return f"{self.ffprobe} -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate {self.input}"
 
 
+
 class ffmpegCmdBuilder():
 
     def __init__(
@@ -65,6 +66,8 @@ class ffmpegCmdBuilder():
         bitrate=None,
         crop_origin=None,
         crop_size=None,
+        codec_preset=None,
+        codec_pass=None,
         fps=None
     ):
         self.input = input
@@ -74,11 +77,13 @@ class ffmpegCmdBuilder():
         self.bitrate = bitrate
         self.crop_origin = crop_origin
         self.crop_size = crop_size
+        self.codec_preset = codec_preset
+        self.codec_pass = codec_pass
         self.fps = fps
 
     @property
     def ffmpeg(self):
-        return f"{self.bin} -i {self.input} -q:v 0"
+        return f"{self.bin} -i {self.input}"
 
     @property
     def mutefilter(self):
@@ -90,7 +95,7 @@ class ffmpegCmdBuilder():
 
     @property
     def bitratefilter(self):
-        return f'-maxrate:v {self.bitrate}' if self.bitrate else ''
+        return f'-b:v {self.bitrate}' if self.bitrate else ''
 
     @property
     def fpsfilter(self):
@@ -119,7 +124,7 @@ class ffmpegCmdBuilder():
         return f"{self.ffmpeg} -af 'volumedetect' {self.pipestdout}"
 
     @property
-    def filterv(self):
+    def vfilters(self):
         filters = list(filter(lambda f: f != '', [
             self.cropfilter,
             self.fpsfilter,
@@ -133,13 +138,20 @@ class ffmpegCmdBuilder():
 
     @property
     def filters(self):
-        return f'{self.mutefilter} {self.bitratefilter} {self.filterv}'
+        return f'{self.mutefilter} {self.bitratefilter} {self.vfilters}'
+
+    @property
+    def codec(self):
+        if self.codec_preset == 'h264WebVBR':
+            return "-c:v libx264 -crf 35 -profile:v main -level 4.0"
+        else:
+            return ""
 
     def export(self, output):
-        return f'{self.ffmpeg} {self.filters} {output}'
+        return f'{self.ffmpeg} {self.codec} {self.filters} {output}'
 
     def slice(self, output, start, duration):
-        return f'{self.ffmpeg} {self.filters} -ss {start} -t {duration} {output}'
+        return f'{self.ffmpeg} {self.codec} {self.filters} -ss {start} -t {duration} {output}'
 
 class ffmpegProbeVideoInfoAdapter():
 
@@ -194,6 +206,7 @@ class ffmpegVideoCompressorAdapter():
         bitrate=None,
         crop_origin=None,
         crop_size=None,
+        codec_preset=None,
         fps=None,
     ):
         self._bin_ffmpeg = bin_ffmpeg
@@ -205,6 +218,7 @@ class ffmpegVideoCompressorAdapter():
         self._crop_origin = crop_origin
         self._crop_size = crop_size
         self._fps = fps
+        self._codec_preset = codec_preset
 
     @property
     def ffmpeg(self):
@@ -216,6 +230,7 @@ class ffmpegVideoCompressorAdapter():
             'bitrate': self._bitrate,
             'crop_origin': self._crop_origin,
             'crop_size': self._crop_size,
+            'codec_preset': self._codec_preset,
             'fps': self._fps
         })
 

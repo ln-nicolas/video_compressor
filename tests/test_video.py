@@ -180,7 +180,7 @@ def test_combine_filter_crop_fps_bitrate(temp):
     (video
         .crop(origin=(10, 10), size=(100, 200))
         .fps(24)
-        .bitrate(1_000_000)
+        .bitrate('2M')
         .mute(True)
         .export(Crop24fps1kBitrate)
     )
@@ -191,7 +191,7 @@ def test_combine_filter_crop_fps_bitrate(temp):
     
     assert list(info.getResolution()) == [100, 200]
     assert info.getFramePerSeconds() == 24
-    assert info.getVideoBitrate() < 1_000_000
+    assert info.getVideoBitrate() < 2_000_000
 
 def test_combine_filter_scale_fps_bitrate_mute(temp):
 
@@ -262,6 +262,15 @@ def test_export_video_collection(temp):
         assert list(export.getResolution())[0] == setting['scale'][0]
         assert export.getFramePerSeconds() == setting['fps']
         assert export.getVideoBitrate() < setting['bitrate']
+
+
+def test_hs264_webpreset(temp):
+
+    h264WebPreset = temp('webh264.mp4')
+    video = VideoCompressor('./tests/sample.mp4')
+    video.bitrate('1M').codecPreset('h264WebVBR').export(h264WebPreset)
+
+    assert VideoInfo(h264WebPreset).getSize() < video.info.getSize()
 
 
 # targetSize=$(( 25 * 1000 * 1000 * 8 )) # 25MB in bits

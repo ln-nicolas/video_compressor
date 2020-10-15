@@ -60,6 +60,13 @@ class VideoInfoCollection():
 
 class VideoCompressor():
 
+    WebSettings = [
+        {'scale':[480, -1], 'bitrate': '200k', 'fps': 24, 'suffix':'@sm'},
+        {'scale':[640, -1], 'bitrate': '1M', 'fps': 24, 'suffix':'@md'},
+        {'scale':[960, -1], 'bitrate': '2M', 'fps': 24, 'suffix':'@lg'},
+        {'scale':[1280, -1], 'bitrate': '3M', 'fps': 24, 'suffix':'@xl'},
+    ]
+
     @classmethod
     def defaultCompressorAdapter(cls):
         return ffmpegVideoCompressorAdapter
@@ -73,6 +80,7 @@ class VideoCompressor():
         crop_origin=None,
         crop_size=None,
         fps=None,
+        codec_preset=None,
         suffix="",
         adapter=None,
     ):
@@ -83,6 +91,7 @@ class VideoCompressor():
         self._crop_origin = crop_origin
         self._crop_size = crop_size
         self._fps = fps
+        self._codec_preset = codec_preset
         self._suffix = suffix
 
         self.VideoCompressorAdapter = adapter or VideoCompressor.defaultCompressorAdapter()
@@ -96,6 +105,7 @@ class VideoCompressor():
             bitrate=self._bitrate,
             crop_origin=self._crop_origin,
             crop_size=self._crop_size,
+            codec_preset=self._codec_preset,
             fps=self._fps
         )
 
@@ -111,6 +121,7 @@ class VideoCompressor():
             'bitrate': self._bitrate,
             'crop_origin': self._crop_origin,
             'crop_size': self._crop_size,
+            'codec_preset': self._codec_preset,
             'fps': self._fps
         }
 
@@ -137,6 +148,9 @@ class VideoCompressor():
 
     def fps(self, fps):
         return self.update(fps=fps)
+
+    def codecPreset(self, codec_preset):
+        return self.update(codec_preset=codec_preset)
 
     def export(self, output):
         filename, ext = os.path.splitext(output)
