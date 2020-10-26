@@ -1,6 +1,7 @@
 from shutil import which
 import subprocess
 import os
+import json
 
 from ..exceptions import MissingLibraryError, InvalidVideoInput
 
@@ -172,12 +173,25 @@ class ffmpegCmdBuilder():
     def slice(self, output, start, duration):
         return f'{self.ffmpeg} {self.codec} {self.filters} -ss {start} -t {duration} {output}'
 
+
+class mp4InfoCmdBuilder():
+
+    def __init__(self, bin, input):
+        self._bin = check_bin(bin)
+        self._input = input
+
+    @property
+    def info(self):
+        return f"{self._bin} --format json {self._input}"
+
+
 class ffmpegProbeVideoInfoAdapter():
 
-    def __init__(self, input=None, ffmpeg_bin='ffmpeg', ffprobe_bin='ffprobe'):
+    def __init__(self, input=None, ffmpeg_bin='ffmpeg', ffprobe_bin='ffprobe', mp4info_bin='mp4info'):
         self.input = input
         self.ffprobe = ffprobeCmdBuilder(input=input, bin=ffprobe_bin)
         self.ffmpeg = ffmpegCmdBuilder(input=input, bin=ffmpeg_bin)
+        self.mp4Info = mp4InfoCmdBuilder(input=input, bin=mp4info_bin)
 
     def check_video_integrity(self, input):
         trace, error = process(self.ffmpeg.integrity)
@@ -212,14 +226,18 @@ class ffmpegProbeVideoInfoAdapter():
         rate, error = process(self.ffprobe.fps)
         return round(eval(rate))
 
-
+    def isFragmented(self):
+        info, error = process(self.mp4Info.info)
+        info = json.loads(info)
+        return info['movie']['fragments']
 class ffmpegVideoCompressorAdapter():
 
     def __init__(
         self,
         input=None,
-        bin_ffmpeg='ffmpeg',
-        bin_ffprobe='ffprobe',
+        ffmpeg_bin='ffmpeg',
+        ffprobe_bin='ffprobe',
+        mp4info_bin='mp4info',
         mute=None,
         scale=None,
         bitrate=None,
@@ -229,8 +247,9 @@ class ffmpegVideoCompressorAdapter():
         quality=None,
         fps=None,
     ):
-        self._bin_ffmpeg = bin_ffmpeg
-        self._bin_ffprobe = bin_ffprobe
+        self._bin_ffmpeg = ffmpeg_bin
+        self._bin_ffprobe = ffprobe_bin
+        self._bin_mp4info = mp4info_bin
         self._input = input
         self._mute = mute
         self._scale = scale

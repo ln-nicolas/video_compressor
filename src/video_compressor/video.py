@@ -42,7 +42,8 @@ class VideoInfo():
     def getFramePerSeconds(self):
         return self.adapter.getFramePerSeconds()
 
-
+    def isFragmented(self):
+        return self.adapter.isFragmented()
 class VideoInfoCollection():
 
     def __init__(self, videos=None):
@@ -51,8 +52,8 @@ class VideoInfoCollection():
     def __len__(self):
         return len(self._videos)
 
-    def append(self, video):
-        self._videos.append(VideoInfo(video))
+    def append(self, video, adapter_options={}):
+        self._videos.append(VideoInfo(video, **adapter_options))
 
     def getDurationInMicroseconds(self):
         return sum(map(lambda s: s.getDurationInMicroseconds(), self._videos))
@@ -84,6 +85,7 @@ class VideoCompressor():
         quality=None,
         suffix="",
         adapter=None,
+        **adapter_options,
     ):
         self._input = input
         self._mute = mute
@@ -95,6 +97,7 @@ class VideoCompressor():
         self._codec_preset = codec_preset
         self._quality = quality
         self._suffix = suffix
+        self._adapter_options = adapter_options
 
         self.VideoCompressorAdapter = adapter or VideoCompressor.defaultCompressorAdapter()
 
@@ -109,12 +112,13 @@ class VideoCompressor():
             crop_size=self._crop_size,
             codec_preset=self._codec_preset,
             quality=self._quality,
-            fps=self._fps
+            fps=self._fps,
+            **self._adapter_options
         )
 
     @property
     def info(self):
-        return VideoInfo(self._input)
+        return VideoInfo(self._input, **self._adapter_options)
 
     def options(self):
         return {
@@ -126,13 +130,13 @@ class VideoCompressor():
             'crop_size': self._crop_size,
             'codec_preset': self._codec_preset,
             'quality': self._quality,
-            'fps': self._fps
+            'fps': self._fps,
         }
 
     def update(self, **updates):
         options = self.options()
         options.update(updates)
-        video = VideoCompressor(**options)
+        video = VideoCompressor(**options, **self._adapter_options)
         video.VideoCompressorAdapter = self.VideoCompressorAdapter
         return video
 
@@ -179,7 +183,7 @@ class VideoCompressor():
             start, duration = step
             step_path = f'{path}-{i}{ext}'
             self.compressor_adapter.slice(step_path, start, duration)
-            videos.append(step_path)
+            videos.append(step_path, self._adapter_options)
 
         return videos
 

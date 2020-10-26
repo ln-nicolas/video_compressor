@@ -5,7 +5,7 @@ import os
 import shutil
 
 from video_compressor.exceptions import MissingLibraryError, InvalidVideoInput
-from video_compressor import VideoCompressor, VideoInfo, VideoInfoCollection
+import video_compressor as vp
 
 __author__ = "Lenselle Nicolas"
 __copyright__ = "Lenselle Nicolas"
@@ -35,6 +35,20 @@ def beforeAll(tempdir):
     yield
     shutil.rmtree(tempdir)
 
+
+def VideoInfo(input, **options):
+    return vp.VideoInfo(
+        input,
+        mp4info_bin='/Users/nicolaslenselle/Downloads/Bento4-SDK-1-6-0-637.universal-apple-macosx/bin/mp4info',
+        **options
+    )
+
+def VideoCompressor(input, **options):
+    return vp.VideoCompressor(
+        input,
+        mp4info_bin='/Users/nicolaslenselle/Downloads/Bento4-SDK-1-6-0-637.universal-apple-macosx/bin/mp4info',
+        **options
+    )
 
 def test_error_with_invalid_ffmpeg():
     VideoInfo('./tests/sample.mp4', ffprobe_bin='ffprobe')
@@ -242,7 +256,7 @@ def test_export_video_collection(temp):
     ]
 
     video = VideoCompressor('./tests/sample.mp4')
-    video.exportCollection(temp('sample.mp4'), settings)
+    list(video.exportCollection(temp('sample.mp4'), settings))
 
     for setting in settings:
         suffix = setting['suffix']
@@ -274,6 +288,10 @@ def test_export_video_with_height_not_divisable_by_two(temp):
     videoCrop.scale(480, -1).export(temp('video-crop2.mp4'))
     
 
+def test_check_if_video_is_fragmented(temp):
+    video = VideoInfo('./tests/sample.mp4')
+    fragmented = video.isFragmented()
+    assert fragmented == False
 
 # targetSize=$(( 25 * 1000 * 1000 * 8 )) # 25MB in bits
 # length=`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp4`
