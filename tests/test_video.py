@@ -47,6 +47,7 @@ def VideoCompressor(input, **options):
     return vp.VideoCompressor(
         input,
         mp4info_bin='/Users/nicolaslenselle/Downloads/Bento4-SDK-1-6-0-637.universal-apple-macosx/bin/mp4info',
+        mp4fragment_bin='/Users/nicolaslenselle/Downloads/Bento4-SDK-1-6-0-637.universal-apple-macosx/bin/mp4fragment',
         **options
     )
 
@@ -117,6 +118,10 @@ def test_get_video_size():
     s = video.getSize()
     assert s == 1507453
 
+def test_check_if_video_fragmentation(temp):
+    video = VideoInfo('./tests/sample.mp4')
+    fragmented = video.isFragmented()
+    assert fragmented is False
 
 def test_mute_a_video(temp):
     video = VideoCompressor(input='./tests/sample.mp4')
@@ -288,10 +293,15 @@ def test_export_video_with_height_not_divisable_by_two(temp):
     videoCrop.scale(480, -1).export(temp('video-crop2.mp4'))
     
 
-def test_check_if_video_is_fragmented(temp):
-    video = VideoInfo('./tests/sample.mp4')
-    fragmented = video.isFragmented()
-    assert fragmented == False
+def test_fragment_a_video(temp):
+
+    video = VideoCompressor('./tests/sample.mp4')
+    assert video.info.isFragmented() is False
+
+    sample_fragmented = temp(filename='sample-fragment.mp4')
+
+    video.fragment(sample_fragmented)
+    assert VideoInfo(sample_fragmented).isFragmented() is True
 
 # targetSize=$(( 25 * 1000 * 1000 * 8 )) # 25MB in bits
 # length=`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp4`

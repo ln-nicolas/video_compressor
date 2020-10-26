@@ -167,6 +167,9 @@ class VideoCompressor():
         filename, ext = os.path.splitext(output)
         return self.compressor_adapter.export(f'{filename}{self._suffix}{ext}')
 
+    def fragment(self, output):
+        return self.compressor_adapter.fragment(output)
+
     def slice(self, output, stepInMilliseconds=1000):
         
         videos = VideoInfoCollection()

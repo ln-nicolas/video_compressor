@@ -187,7 +187,7 @@ class mp4InfoCmdBuilder():
 
 class ffmpegProbeVideoInfoAdapter():
 
-    def __init__(self, input=None, ffmpeg_bin='ffmpeg', ffprobe_bin='ffprobe', mp4info_bin='mp4info'):
+    def __init__(self, input=None, ffmpeg_bin='ffmpeg', ffprobe_bin='ffprobe', mp4info_bin='mp4info', **kwargs):
         self.input = input
         self.ffprobe = ffprobeCmdBuilder(input=input, bin=ffprobe_bin)
         self.ffmpeg = ffmpegCmdBuilder(input=input, bin=ffmpeg_bin)
@@ -238,6 +238,7 @@ class ffmpegVideoCompressorAdapter():
         ffmpeg_bin='ffmpeg',
         ffprobe_bin='ffprobe',
         mp4info_bin='mp4info',
+        mp4fragment_bin='mp4fragment',
         mute=None,
         scale=None,
         bitrate=None,
@@ -250,6 +251,7 @@ class ffmpegVideoCompressorAdapter():
         self._bin_ffmpeg = ffmpeg_bin
         self._bin_ffprobe = ffprobe_bin
         self._bin_mp4info = mp4info_bin
+        self._bin_mp4fragment = mp4fragment_bin
         self._input = input
         self._mute = mute
         self._scale = scale
@@ -282,3 +284,7 @@ class ffmpegVideoCompressorAdapter():
         start_str = str(round(startInMillisecond / 1000, 3))
         duration_str = str(round(durationInMicroseconds / 1000, 3))
         process(self.ffmpeg.slice(output, start_str, duration_str))
+
+    def fragment(self, output):
+        check_bin(self._bin_mp4fragment)
+        process(f'{self._bin_mp4fragment} {self._input} {output}')
