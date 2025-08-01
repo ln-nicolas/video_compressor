@@ -1,5 +1,6 @@
 A simple python helper to compress video. 
 
+
 ## Installation
 
 Please install [ffmpeg bin](https://ffmpeg.org/)
